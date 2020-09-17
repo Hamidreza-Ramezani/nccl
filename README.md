@@ -32,7 +32,7 @@ To build the library :
 
 ```shell
 $ cd nccl
-$ make -j src.build
+$ make -j src.build CUDA_HOME=/mnt/nfs/clustersw/shared/cuda/10.1.243
 ```
 
 If CUDA is not installed in the default /usr/local/cuda path, you can define the CUDA path with :
