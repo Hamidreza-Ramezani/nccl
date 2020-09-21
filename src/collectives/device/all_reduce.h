@@ -53,7 +53,17 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       offset = chunkOffset + chunk * realChunkSize;
       nelem = min(realChunkSize, size-offset);
 
-      prims.recvReduceSend(thisInput+offset, nelem);
+      
+      T* __restrict__ temp;
+      ssize_t offset2 = offset - nelem;
+      prims.recv(temp + offset2 , nelem);
+      for (int i=0;i < nelem; ++i) {
+       //thisInput[offset2+i] = thisInput[offset2+i] + temp[offset2+i];  
+       temp[offset2+i] = thisInput[offset2+i] + temp[offset2+i];  
+      }
+
+      prims.send(thisInput + offset, nelem);
+    //prims.recvReduceSend(thisInput+offset, nelem);
     }
 
     // step k-1: reduce this buffer and data, which will produce the final
