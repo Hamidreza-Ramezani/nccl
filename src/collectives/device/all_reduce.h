@@ -59,12 +59,17 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       prims.recv(temp + offset2 , nelem);
       for (int i=0;i < nelem; ++i) {
        //thisInput[offset2+i] = thisInput[offset2+i] + temp[offset2+i];  
-       temp[offset2+i] = thisInput[offset2+i] + temp[offset2+i];  
+       //temp[offset2+i] = thisInput[offset2+i] + temp[offset2+i];  	
+       thisOutput[offset2+i] = FUNC()(thisInput[offset2+i], temp[offset2+i]);  
       }
-
       prims.send(thisInput + offset, nelem);
-    //prims.recvReduceSend(thisInput+offset, nelem);
+
+
+
+
+    // prims.recvReduceSend(thisInput+offset, nelem);
     }
+
 
     // step k-1: reduce this buffer and data, which will produce the final
     // result that we store in this data and push to the next GPU

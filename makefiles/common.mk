@@ -88,7 +88,7 @@ CXXFLAGS  += -DENABLE_TRACE
 endif
 
 ifneq ($(KEEP), 0)
-NVCUFLAGS += -keep
+NVCUFLAGS += -keep 
 endif
 
 ifneq ($(PROFAPI), 0)
