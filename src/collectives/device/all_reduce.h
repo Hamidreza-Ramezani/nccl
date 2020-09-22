@@ -53,7 +53,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       offset = chunkOffset + chunk * realChunkSize;
       nelem = min(realChunkSize, size-offset);
 
-      
+/*
       T* __restrict__ temp;
       ssize_t offset2 = offset - nelem;
       prims.recv(temp + offset2 , nelem);
@@ -64,10 +64,10 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       }
       prims.send(thisInput + offset, nelem);
 
+*/
 
 
-
-    // prims.recvReduceSend(thisInput+offset, nelem);
+     prims.recvReduceSend(thisInput+offset, nelem);
     }
 
 
@@ -76,6 +76,20 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     chunk = ring->devUserRanks[0];
     offset = chunkOffset + chunk * realChunkSize;
     nelem = min(realChunkSize, size-offset);
+
+    /*
+     *     T* __restrict__ temp;
+     *     //offset2 = offset - nelem;
+     *     //prims.recv(temp + offset2 , nelem);
+     *     prims.recv(temp + offset , nelem);
+     *     for (int i=0; i < nelem; ++i){
+     *          //(thisInput + offset2 + i) = *(thisInput + offset2 + i) + (*(temp + offset2 + i));
+     *          thisOutput[offset2+i] = FUNC()(thisInput[offset2+i], temp[offset2+i]);
+     *     }
+     *     prims.copySend(thisInput+offset, thisOutput+offset, nelem);
+     */
+	
+
 
     prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
 
