@@ -23,6 +23,9 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*(ssize_t)chunkSize;
   const ssize_t size = args->coll.count;
 
+  printf("hello World1 \n");
+
+
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
   T * __restrict__ thisOutput = (T*)args->recvbuff;
@@ -65,7 +68,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       prims.send(thisInput + offset, nelem);
 
 */
-
+    
 
      prims.recvReduceSend(thisInput+offset, nelem);
     }
@@ -126,6 +129,9 @@ __device__ void ncclAllReduceTreeKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
 
+
+  printf("hello World2 \n");
+
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
   }
@@ -185,6 +191,8 @@ __device__ void ncclAllReduceCollNetKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
 
+  printf("hello World3 \n");
+  
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
   }
@@ -245,6 +253,8 @@ __device__ void ncclAllReduceRingLLKernel(struct CollectiveArgs* args) {
   const ssize_t size = args->coll.count;
 
   ncclLLPrimitives<T, FUNC, 1, 1> LLprims(tid, nthreads, &ring->prev, &ring->next, stepLines, channel, comm);
+
+  printf("hello World4 \n");
 
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
@@ -315,6 +325,9 @@ __device__ void ncclAllReduceTreeLLKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
 
+  printf("hello World5 \n");
+
+
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
   }
@@ -373,7 +386,7 @@ __device__ void ncclAllReduceCollNetLLKernel(struct CollectiveArgs* args) {
   const ssize_t minChunkSize = nthreads*sizeof(uint64_t) / sizeof(T);
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
-
+ 
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
   }
@@ -436,6 +449,8 @@ __device__ void ncclAllReduceRingLL128Kernel(struct CollectiveArgs* args) {
   const ssize_t size = args->coll.count;
 
   ncclLL128Primitives<T, FUNC, 1, 1> LLprims(tid, nthreads, &ring->prev, &ring->next, stepSize, channel, comm);
+
+
 
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;

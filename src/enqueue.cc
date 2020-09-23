@@ -273,6 +273,10 @@ static ncclResult_t getAlgoInfo(struct ncclInfo* info) {
       }
     }
   }
+
+ info->algorithm = NCCL_ALGO_RING;
+ info->protocol = NCCL_PROTO_SIMPLE;
+
   if (info->algorithm == -1 || info->protocol == -1) {
     WARN("Error : no algorithm/protocol available");
     return ncclInternalError;
