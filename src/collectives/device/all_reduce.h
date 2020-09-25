@@ -7,6 +7,14 @@
 #include "devcomm.h"
 #include "primitives.h"
 #include "collectives.h"
+//#include "cuda_runtime.h"
+//#include <cuda_runtime_api.h>
+//#include <cuda.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+
+
+
 
 template<int UNROLL, class FUNC, typename T>
 __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
@@ -23,7 +31,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*(ssize_t)chunkSize;
   const ssize_t size = args->coll.count;
 
-  printf("hello World1 \n");
+ // printf("hello World1 \n");
 
 
   // Compute pointers
@@ -56,21 +64,23 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       offset = chunkOffset + chunk * realChunkSize;
       nelem = min(realChunkSize, size-offset);
 
-/*
-      T* __restrict__ temp;
-      ssize_t offset2 = offset - nelem;
-      prims.recv(temp + offset2 , nelem);
+      T* __restrict__ temp = (T*)malloc(size * sizeof(T));
+      //cudaMalloc((void**)&temp,(int) size * sizeof(T));
+      //ssize_t offset2 = offset - nelem;
+      prims.recv(temp + offset , nelem);
       for (int i=0;i < nelem; ++i) {
-       //thisInput[offset2+i] = thisInput[offset2+i] + temp[offset2+i];  
-       //temp[offset2+i] = thisInput[offset2+i] + temp[offset2+i];  	
-       thisOutput[offset2+i] = FUNC()(thisInput[offset2+i], temp[offset2+i]);  
+       //thisInput[offset + i] = thisInput[offset + i] + temp[offset + i];  
+       //temp[offset + i] = thisInput[offset + i] + temp[offset + i];  	
+       temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
+       //temp[offset + i] = thisInput[offset + i] + FIFO[offset + i];  	
       }
-      prims.send(thisInput + offset, nelem);
+      //prims.send(thisInput + offset, nelem);
+      prims.send(temp + offset, nelem);
 
-*/
+
     
 
-     prims.recvReduceSend(thisInput+offset, nelem);
+       //prims.recvReduceSend(thisInput+offset, nelem);
     }
 
 
@@ -130,7 +140,7 @@ __device__ void ncclAllReduceTreeKernel(struct CollectiveArgs* args) {
   const ssize_t size = args->coll.count;
 
 
-  printf("hello World2 \n");
+ // printf("hello World2 \n");
 
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
@@ -191,7 +201,7 @@ __device__ void ncclAllReduceCollNetKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
 
-  printf("hello World3 \n");
+ // printf("hello World3 \n");
   
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
@@ -254,7 +264,7 @@ __device__ void ncclAllReduceRingLLKernel(struct CollectiveArgs* args) {
 
   ncclLLPrimitives<T, FUNC, 1, 1> LLprims(tid, nthreads, &ring->prev, &ring->next, stepLines, channel, comm);
 
-  printf("hello World4 \n");
+  //printf("hello World4 \n");
 
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
@@ -325,7 +335,7 @@ __device__ void ncclAllReduceTreeLLKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
 
-  printf("hello World5 \n");
+ // printf("hello World5 \n");
 
 
   if (loopSize > size) {
