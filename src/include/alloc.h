@@ -3,7 +3,6 @@
  *
  * See LICENSE.txt for license information
  ************************************************************************/
-
 #ifndef NCCL_ALLOC_H_
 #define NCCL_ALLOC_H_
 

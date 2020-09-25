@@ -12,9 +12,17 @@
 //#include <cuda.h>
 //#include <stdio.h>
 //#include <stdlib.h>
+//#include "checks.h"
 
-
-
+/*
+#define CUDACHECK(cmd) do {                                 \
+    cudaError_t err = cmd;                                  \
+    if( err != cudaSuccess ) {                              \
+        printf("Failed: Cuda error %s:%d '%s'\n");          \
+        return;			                    \
+    }                                                       \
+} while(false)
+*/
 
 template<int UNROLL, class FUNC, typename T>
 __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
@@ -31,7 +39,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*(ssize_t)chunkSize;
   const ssize_t size = args->coll.count;
 
- // printf("hello World1 \n");
+  //printf("hello World1 \n");
 
 
   // Compute pointers
@@ -64,21 +72,20 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       offset = chunkOffset + chunk * realChunkSize;
       nelem = min(realChunkSize, size-offset);
 
-      T* __restrict__ temp = (T*)malloc(size * sizeof(T));
-      //cudaMalloc((void**)&temp,(int) size * sizeof(T));
-      //ssize_t offset2 = offset - nelem;
-      prims.recv(temp + offset , nelem);
+
+
+      //T* __restrict__ h_temp = (T*)malloc(size * sizeof(T));
+      //T* __restrict__ d_temp;
+      T* __restrict__ d_temp = new T[size];
+      //cudaMalloc((void**)&d_temp, size * sizeof(T));
+      //CUDACHECK(cudaMalloc((void**)&d_temp, size * sizeof(T)));
+      //cudaMemcpy(d_temp, h_temp, N*N*sizeof(int), cudaMemcpyHostToDevice); 
+      prims.recv(d_temp + offset , nelem);
       for (int i=0;i < nelem; ++i) {
-       //thisInput[offset + i] = thisInput[offset + i] + temp[offset + i];  
-       //temp[offset + i] = thisInput[offset + i] + temp[offset + i];  	
-       temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
-       //temp[offset + i] = thisInput[offset + i] + FIFO[offset + i];  	
+       d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
       }
-      //prims.send(thisInput + offset, nelem);
-      prims.send(temp + offset, nelem);
-
-
-    
+      prims.send(d_temp + offset, nelem);
+      delete[] d_temp; 
 
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
@@ -140,7 +147,7 @@ __device__ void ncclAllReduceTreeKernel(struct CollectiveArgs* args) {
   const ssize_t size = args->coll.count;
 
 
- // printf("hello World2 \n");
+  //printf("hello World2 \n");
 
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
@@ -201,7 +208,7 @@ __device__ void ncclAllReduceCollNetKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
 
- // printf("hello World3 \n");
+ //printf("hello World3 \n");
   
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
@@ -335,7 +342,7 @@ __device__ void ncclAllReduceTreeLLKernel(struct CollectiveArgs* args) {
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
 
- // printf("hello World5 \n");
+ //printf("hello World5 \n");
 
 
   if (loopSize > size) {
@@ -396,7 +403,9 @@ __device__ void ncclAllReduceCollNetLLKernel(struct CollectiveArgs* args) {
   const ssize_t minChunkSize = nthreads*sizeof(uint64_t) / sizeof(T);
   const ssize_t loopSize = nChannels*chunkSize;
   const ssize_t size = args->coll.count;
- 
+
+  //printf("hello World6 \n"); 
+
   if (loopSize > size) {
     chunkSize = DIVUP(size, nChannels*minChunkSize)*minChunkSize;
   }
