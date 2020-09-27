@@ -74,9 +74,12 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
 
 
 
-      //T* __restrict__ h_temp = (T*)malloc(size * sizeof(T));
-      //T* __restrict__ d_temp;
-      T* __restrict__ d_temp = new T[size];
+      T* __restrict__ d_temp;
+      if (threadIdx.x == 0)
+          d_temp = (T*)malloc(size * sizeof(T));
+      __syncthreads();
+      //d_temp = (T*)malloc(size * sizeof(T));
+      //T* __restrict__ d_temp = new T[size];
       //cudaMalloc((void**)&d_temp, size * sizeof(T));
       //CUDACHECK(cudaMalloc((void**)&d_temp, size * sizeof(T)));
       //cudaMemcpy(d_temp, h_temp, N*N*sizeof(int), cudaMemcpyHostToDevice); 
@@ -85,7 +88,9 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
        d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
       }
       prims.send(d_temp + offset, nelem);
-      delete[] d_temp; 
+      //delete[] d_temp; 
+      //cudaFree(d_temp);      
+      free(d_temp);      
 
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
