@@ -73,13 +73,12 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       nelem = min(realChunkSize, size-offset);
 
 
-
       //T* __restrict__ d_temp;
-      //if (threadIdx.x == 0 && blockIdx.x == 0)
-      //    d_temp = (T*)malloc(size * sizeof(T));
-      //__syncthreads();
       //d_temp = (T*)malloc(size * sizeof(T));
       T* __restrict__ d_temp = new T[size];
+      //if (d_temp == NULL){
+      //  printf("it returned a null pointer");
+      //}
       //cudaMalloc((void**)&d_temp, size * sizeof(T));
       //CUDACHECK(cudaMalloc((void**)&d_temp, size * sizeof(T)));
       //cudaMemcpy(d_temp, h_temp, N*N*sizeof(int), cudaMemcpyHostToDevice); 
@@ -101,9 +100,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     chunk = ring->devUserRanks[0];
     offset = chunkOffset + chunk * realChunkSize;
     nelem = min(realChunkSize, size-offset);
-
-
-
+/*
     T* __restrict__ temp = new T[size];
     prims.directRecv(temp + offset , offset, nelem);
     for (int i=0; i < nelem; ++i){
@@ -111,9 +108,8 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     }
     prims.copySend(temp + offset, thisOutput+offset, nelem);
     
-
-    //prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
-    //prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
+*/
+    prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
 
     // k-2 steps: copy to next GPU
     for (int j=1; j<nranks-1; ++j) {
