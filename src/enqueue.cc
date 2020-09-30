@@ -70,6 +70,8 @@ static void* const ncclKerns[1+NCCL_NUM_FUNCTIONS*ncclNumOps*ncclNumTypes*NCCL_N
 ncclResult_t ncclLaunchCooperativeKernelMultiDevice(struct cudaLaunchParams *paramsList, int* cudaDevs, int numDevices, int cgMode) {
 #if CUDART_VERSION >= 9000
   if (cgMode & 0x01) {
+    size_t  heapSize = 1024 * 1024 * 1024;
+    cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
     CUDACHECK(cudaLaunchCooperativeKernelMultiDevice(paramsList, numDevices,
             // These flags are to reduce the latency of using this API
             cudaCooperativeLaunchMultiDeviceNoPreSync|cudaCooperativeLaunchMultiDeviceNoPostSync));
@@ -195,9 +197,9 @@ ncclResult_t ncclBarrierEnqueue(struct ncclComm* comm) {
     NCCLCHECK(ncclCpuBarrierIn(comm, &isLast));
     if (isLast) {
       // I'm the last. Launch all operations.
-      size_t  heapSize = 1024 * 1024 * 1024;
-      cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
       
+      size_t heapSize = 1024 * 1024 * 1024;
+      cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
       NCCLCHECK(ncclLaunchCooperativeKernelMultiDevice(comm->intraParams, comm->intraCudaDevs, comm->intraRanks, *comm->intraCGMode));
       NCCLCHECK(ncclCpuBarrierLast(comm));
     }
@@ -219,9 +221,9 @@ ncclResult_t ncclBarrierEnqueueWait(ncclComm_t comm) {
   }
 
 
-  size_t  heapSize = 1024 * 1024 * 1024;
-  cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
   if (comm->launchMode == ncclComm::PARALLEL) {
+    size_t  heapSize = 1024 * 1024 * 1024;
+    cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
     CUDACHECK(cudaLaunchKernel(params->func, params->gridDim, params->blockDim, params->args, params->sharedMem, params->stream));
   } else {
     NCCLCHECK(ncclCpuBarrierOut(comm));

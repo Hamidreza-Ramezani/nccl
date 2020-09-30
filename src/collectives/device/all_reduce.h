@@ -73,9 +73,9 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       nelem = min(realChunkSize, size-offset);
 
 
-      //T* __restrict__ d_temp;
-      //d_temp = (T*)malloc(size * sizeof(T));
-      T* __restrict__ d_temp = new T[size];
+      T* __restrict__ d_temp;
+      d_temp = (T*)malloc(size * sizeof(T));
+      //T* __restrict__ d_temp = new T[size];
       //if (d_temp == NULL){
       //  printf("it returned a null pointer");
       //}
@@ -87,9 +87,9 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
        d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
       }
       prims.send(d_temp + offset, nelem);
-      delete[] d_temp; 
+      //delete[] d_temp; 
       //cudaFree(d_temp);      
-      //free(d_temp);      
+      free(d_temp);      
 
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
