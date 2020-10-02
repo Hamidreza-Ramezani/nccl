@@ -71,43 +71,41 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       //d_temp = (T*)malloc(size * sizeof(T));
       
       if (threadIdx.x == 0) {
-           //size_t size = blockDim.x * 64;
-           d_temp = (T*)malloc(size * sizeof(T));
+         d_temp = (T*)malloc(size * sizeof(T));
+      	 //prims.recv(d_temp + offset , nelem);
+      	 //for (int i=0;i < nelem; ++i) {
+      	 //   d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
+      	 //}
+      	 //prims.send(d_temp + offset, nelem);
        }
        __syncthreads();
-
 
       //if (d_temp == NULL){
       //  printf("it returned a null pointer \n");
       //}
 
-
-     // cudaError_t code;
-     // int devcount;
-     // code = cudaGetDeviceCount(&devcount);
-     // int device;
-     // code = cudaGetDevice(&device);
-     // if (code == cudaSuccess)
-     // 	printf("device: cudaGetDevice succeeded: code %08x, adevice = %d \n ", code, device);
-     // else
-     // 	printf("device: cudaGetDevice failed: code %08x\n", code);
-
-     //atomicAdd(&count2, 1);
-     //printf("count2: %d  \n", count2);
-     //printf("count2: %d device: %d  \n", count2, device);
-     //printf("j: %d tid: %d  blockId: %d gridOffset: %d  \n", j, tid, blockIdx.x, gridOffset);
+      //atomicAdd(&count2, 1);
+      //printf("count2: %d  \n", count2);
+      //printf("j: %d tid: %d  blockId: %d gridOffset: %d  \n", j, tid, blockIdx.x, gridOffset);
  
       prims.recv(d_temp + offset , nelem);
+      __syncthreads();
       for (int i=0;i < nelem; ++i) {
        d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
       }
+      __syncthreads();
       prims.send(d_temp + offset, nelem);
 
 
       //delete[] d_temp; 
       //cudaFree(d_temp);      
-      free(d_temp);      
+      //free(d_temp);      
 
+      // Ensure all threads complete before freeing 
+      __syncthreads();
+      if (threadIdx.x == 0){
+          free(d_temp);
+      }
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
 
