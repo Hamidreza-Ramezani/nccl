@@ -7,22 +7,11 @@
 #include "devcomm.h"
 #include "primitives.h"
 #include "collectives.h"
-//#include "cuda_runtime.h"
-//#include <cuda_runtime_api.h>
-//#include <cuda.h>
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include "checks.h"
+#include "cuda_runtime.h"
+#include "cuda.h"
 
-/*
-#define CUDACHECK(cmd) do {                                 \
-    cudaError_t err = cmd;                                  \
-    if( err != cudaSuccess ) {                              \
-        printf("Failed: Cuda error %s:%d '%s'\n");          \
-        return;			                    \
-    }                                                       \
-} while(false)
-*/
+static __device__ int count2 = 0;
+
 
 template<int UNROLL, class FUNC, typename T>
 __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
@@ -40,7 +29,9 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   const ssize_t size = args->coll.count;
 
   //printf("hello World1 \n");
-
+  //atomicAdd(&count2, 1);
+  //printf("count2: %d \n", count2);
+  
 
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
@@ -53,6 +44,8 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     ssize_t realChunkSize = min(chunkSize, DIVUP(size-gridOffset,nranks*nChannels));
     ALIGN_SIZE(realChunkSize, nthreads*sizeof(uint64_t)/sizeof(T));
     ssize_t chunkOffset = gridOffset + bid*nranks*realChunkSize;
+    
+
 
     /////////////// begin AllReduce steps ///////////////
     ssize_t offset;
@@ -73,20 +66,44 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       nelem = min(realChunkSize, size-offset);
 
 
-      T* __restrict__ d_temp;
-      d_temp = (T*)malloc(size * sizeof(T));
-      //T* __restrict__ d_temp = new T[size];
+      //T* __restrict__ d_temp;
+      __shared__ T* __restrict__ d_temp;
+      //d_temp = (T*)malloc(size * sizeof(T));
+      
+      if (threadIdx.x == 0) {
+           //size_t size = blockDim.x * 64;
+           d_temp = (T*)malloc(size * sizeof(T));
+       }
+       __syncthreads();
+
+
       //if (d_temp == NULL){
-      //  printf("it returned a null pointer");
+      //  printf("it returned a null pointer \n");
       //}
-      //cudaMalloc((void**)&d_temp, size * sizeof(T));
-      //CUDACHECK(cudaMalloc((void**)&d_temp, size * sizeof(T)));
-      //cudaMemcpy(d_temp, h_temp, N*N*sizeof(int), cudaMemcpyHostToDevice); 
+
+
+     // cudaError_t code;
+     // int devcount;
+     // code = cudaGetDeviceCount(&devcount);
+     // int device;
+     // code = cudaGetDevice(&device);
+     // if (code == cudaSuccess)
+     // 	printf("device: cudaGetDevice succeeded: code %08x, adevice = %d \n ", code, device);
+     // else
+     // 	printf("device: cudaGetDevice failed: code %08x\n", code);
+
+     //atomicAdd(&count2, 1);
+     //printf("count2: %d  \n", count2);
+     //printf("count2: %d device: %d  \n", count2, device);
+     //printf("j: %d tid: %d  blockId: %d gridOffset: %d  \n", j, tid, blockIdx.x, gridOffset);
+ 
       prims.recv(d_temp + offset , nelem);
       for (int i=0;i < nelem; ++i) {
        d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
       }
       prims.send(d_temp + offset, nelem);
+
+
       //delete[] d_temp; 
       //cudaFree(d_temp);      
       free(d_temp);      

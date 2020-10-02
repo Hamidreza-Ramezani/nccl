@@ -53,6 +53,11 @@
   NCCL_FUNCS3B(coll, copy), \
   NCCL_FUNCS3B(coll, copy)
 
+
+//int count1 = 0;
+
+
+
 // Must be consistent with the ncclFuncSet enum
 static void* const ncclKerns[1+NCCL_NUM_FUNCTIONS*ncclNumOps*ncclNumTypes*NCCL_NUM_ALGORITHMS*NCCL_NUM_PROTOCOLS] = {
   (void*)NCCL_KERN_NAME(ncclSendRecv, copy, i8),
@@ -69,6 +74,8 @@ static void* const ncclKerns[1+NCCL_NUM_FUNCTIONS*ncclNumOps*ncclNumTypes*NCCL_N
 
 ncclResult_t ncclLaunchCooperativeKernelMultiDevice(struct cudaLaunchParams *paramsList, int* cudaDevs, int numDevices, int cgMode) {
 #if CUDART_VERSION >= 9000
+  //printf("count1: %d \n", count1);
+  //count1 ++;    
   if (cgMode & 0x01) {
     size_t  heapSize = 1024 * 1024 * 1024;
     cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
