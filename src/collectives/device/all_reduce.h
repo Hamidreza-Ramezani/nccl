@@ -65,6 +65,12 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       offset = chunkOffset + chunk * realChunkSize;
       nelem = min(realChunkSize, size-offset);
 
+      //size_t limit = 0;
+      //cudaDeviceGetLimit(&limit, cudaLimitMallocHeapSize);
+      //printf("cudaLimitMallocHeapSize: %u\n", (unsigned)limit);
+
+      //atomicAdd(&count2, 1);
+      //printf("count2: %d \n", count2);
 
       //T* __restrict__ d_temp;
       __shared__ T* __restrict__ d_temp;
@@ -72,30 +78,29 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       
       if (threadIdx.x == 0) {
          d_temp = (T*)malloc(size * sizeof(T));
-      	 //prims.recv(d_temp + offset , nelem);
-      	 //for (int i=0;i < nelem; ++i) {
-      	 //   d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
-      	 //}
-      	 //prims.send(d_temp + offset, nelem);
-       }
+         //d_temp = (T*)malloc(nelem * sizeof(T));
+         //d_temp = (T*)malloc(blockDim.x * size * sizeof(T));
+         //d_temp = new T[size];  
+      }
        __syncthreads();
 
       //if (d_temp == NULL){
+      //  return;
       //  printf("it returned a null pointer \n");
       //}
 
-      //atomicAdd(&count2, 1);
-      //printf("count2: %d  \n", count2);
-      //printf("j: %d tid: %d  blockId: %d gridOffset: %d  \n", j, tid, blockIdx.x, gridOffset);
- 
       prims.recv(d_temp + offset , nelem);
+      //prims.recv(d_temp, nelem);
       __syncthreads();
+
       for (int i=0;i < nelem; ++i) {
        d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
       }
+
+      //d_temp[tid] = FUNC()(thisInput[tid], d_temp[tid]);
+
       __syncthreads();
       prims.send(d_temp + offset, nelem);
-
 
       //delete[] d_temp; 
       //cudaFree(d_temp);      
@@ -105,6 +110,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       __syncthreads();
       if (threadIdx.x == 0){
           free(d_temp);
+	  //delete[] d_temp;
       }
        //prims.recvReduceSend(thisInput+offset, nelem);
     }

@@ -77,7 +77,7 @@ ncclResult_t ncclLaunchCooperativeKernelMultiDevice(struct cudaLaunchParams *par
   //printf("count1: %d \n", count1);
   //count1 ++;    
   if (cgMode & 0x01) {
-    size_t  heapSize = 1024 * 1024 * 1024;
+    size_t heapSize = 128 * 1024 * 1024;
     cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
     CUDACHECK(cudaLaunchCooperativeKernelMultiDevice(paramsList, numDevices,
             // These flags are to reduce the latency of using this API
@@ -90,7 +90,7 @@ ncclResult_t ncclLaunchCooperativeKernelMultiDevice(struct cudaLaunchParams *par
   for (int i = 0; i < numDevices; i++) {
     struct cudaLaunchParams* params = paramsList+i;
     CUDACHECK(cudaSetDevice(cudaDevs[i]));
-    size_t  heapSize = 1024 * 1024 * 1024;
+    size_t  heapSize = 128 * 1024 * 1024;
     cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
     CUDACHECK(cudaLaunchKernel(params->func, params->gridDim, params->blockDim, params->args, params->sharedMem, params->stream));
   }
@@ -132,7 +132,7 @@ ncclResult_t setupLaunch(struct ncclComm* comm, struct cudaLaunchParams* params)
   // As we pass that coll directly, we can free it immediately.
   coll->active = 0;
   
-  size_t  heapSize = 1024 * 1024 * 1024;
+  size_t heapSize = 128 * 1024 * 1024;
   cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
 
   params->func = ncclKerns[coll->funcIndex];
@@ -205,7 +205,7 @@ ncclResult_t ncclBarrierEnqueue(struct ncclComm* comm) {
     if (isLast) {
       // I'm the last. Launch all operations.
       
-      size_t heapSize = 1024 * 1024 * 1024;
+      size_t heapSize = 128 * 1024 * 1024;
       cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
       NCCLCHECK(ncclLaunchCooperativeKernelMultiDevice(comm->intraParams, comm->intraCudaDevs, comm->intraRanks, *comm->intraCGMode));
       NCCLCHECK(ncclCpuBarrierLast(comm));
@@ -229,7 +229,7 @@ ncclResult_t ncclBarrierEnqueueWait(ncclComm_t comm) {
 
 
   if (comm->launchMode == ncclComm::PARALLEL) {
-    size_t  heapSize = 1024 * 1024 * 1024;
+    size_t heapSize = 128 * 1024 * 1024;
     cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
     CUDACHECK(cudaLaunchKernel(params->func, params->gridDim, params->blockDim, params->args, params->sharedMem, params->stream));
   } else {
@@ -254,7 +254,7 @@ ncclResult_t ncclBarrierEnqueueWait(ncclComm_t comm) {
 
 ncclResult_t ncclEnqueueEvents(ncclComm_t comm) {
   struct cudaLaunchParams *params = comm->myParams;
-  size_t  heapSize = 1024 * 1024 * 1024;
+  size_t heapSize = 128 * 1024 * 1024;
   cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
   // Enqueue event after NCCL kernel
   CUDACHECK(cudaEventRecord(comm->doneEvent, params->stream));
@@ -548,7 +548,7 @@ ncclResult_t ncclSaveP2p(struct ncclInfo* info) {
 
 ncclResult_t ncclEnqueueCheck(struct ncclInfo* info) {
   // Launch asynchronously if needed
-  size_t  heapSize = 1024 * 1024 * 1024;
+  size_t heapSize = 128 * 1024 * 1024;
   cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
   if (ncclAsyncMode()) {
     ncclResult_t ret = ncclSuccess;
