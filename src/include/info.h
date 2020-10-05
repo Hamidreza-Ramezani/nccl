@@ -29,6 +29,7 @@ struct ncclInfo {
   // NCCL Coll Args
   const void* sendbuff;
   void* recvbuff;
+  //void* tempbuff;
   size_t count;
   ncclDataType_t datatype;
   ncclRedOp_t op;

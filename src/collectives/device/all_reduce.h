@@ -36,6 +36,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
   T * __restrict__ thisOutput = (T*)args->recvbuff;
+  //__shared__ T* __restrict__ temp = (T*)args->temp_buffer;
 
   ncclPrimitives<UNROLL, ALLREDUCE_CHUNKSTEPS/ALLREDUCE_SLICESTEPS, ALLREDUCE_SLICESTEPS, T, 1, 1, 1, FUNC>
     prims(tid, nthreads, &ring->prev, &ring->next, thisOutput, stepSize, channel, comm);
@@ -72,45 +73,46 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       //atomicAdd(&count2, 1);
       //printf("count2: %d \n", count2);
 
-      //T* __restrict__ d_temp;
-      __shared__ T* __restrict__ d_temp;
-      //d_temp = (T*)malloc(size * sizeof(T));
-      
+      //T* __restrict__ temp;
+      __shared__ T* __restrict__ temp;
+      //temp = (T*)malloc(size * sizeof(T));
+      //temp = (T*)args->temp_buffer;
+
       if (threadIdx.x == 0) {
-         d_temp = (T*)malloc(size * sizeof(T));
-         //d_temp = (T*)malloc(nelem * sizeof(T));
-         //d_temp = (T*)malloc(blockDim.x * size * sizeof(T));
-         //d_temp = new T[size];  
+         temp = (T*)malloc(size * sizeof(T));
+         //temp = (T*)malloc(nelem * sizeof(T));
+         //temp = (T*)malloc(blockDim.x * size * sizeof(T));
+         //temp = new T[size];  
       }
        __syncthreads();
 
-      //if (d_temp == NULL){
+      //if (temp == NULL){
       //  return;
       //  printf("it returned a null pointer \n");
       //}
 
-      prims.recv(d_temp + offset , nelem);
-      //prims.recv(d_temp, nelem);
+      prims.recv(temp + offset , nelem);
+      //prims.recv(temp, nelem);
       __syncthreads();
 
       for (int i=0;i < nelem; ++i) {
-       d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
+       temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
       }
 
-      //d_temp[tid] = FUNC()(thisInput[tid], d_temp[tid]);
+      //temp[tid] = FUNC()(thisInput[tid], temp[tid]);
 
       __syncthreads();
-      prims.send(d_temp + offset, nelem);
+      prims.send(temp + offset, nelem);
 
-      //delete[] d_temp; 
-      //cudaFree(d_temp);      
-      //free(d_temp);      
+      //delete[] temp; 
+      //cudaFree(temp);      
+      //free(temp);      
 
       // Ensure all threads complete before freeing 
       __syncthreads();
       if (threadIdx.x == 0){
-          free(d_temp);
-	  //delete[] d_temp;
+          free(temp);
+	  //delete[] temp;
       }
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
