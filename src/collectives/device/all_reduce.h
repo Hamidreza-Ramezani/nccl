@@ -36,6 +36,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
   T * __restrict__ thisOutput = (T*)args->recvbuff;
+  T * __restrict__ d_temp = (T*)args->tempbuff;
 
   ncclPrimitives<UNROLL, ALLREDUCE_CHUNKSTEPS/ALLREDUCE_SLICESTEPS, ALLREDUCE_SLICESTEPS, T, 1, 1, 1, FUNC>
     prims(tid, nthreads, &ring->prev, &ring->next, thisOutput, stepSize, channel, comm);
@@ -73,16 +74,16 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       //printf("count2: %d \n", count2);
 
       //T* __restrict__ d_temp;
-      __shared__ T* __restrict__ d_temp;
+      //__shared__ T* __restrict__ d_temp;
       //d_temp = (T*)malloc(size * sizeof(T));
       
-      if (threadIdx.x == 0) {
-         d_temp = (T*)malloc(size * sizeof(T));
-         //d_temp = (T*)malloc(nelem * sizeof(T));
-         //d_temp = (T*)malloc(blockDim.x * size * sizeof(T));
-         //d_temp = new T[size];  
-      }
-       __syncthreads();
+//      if (threadIdx.x == 0) {
+//         d_temp = (T*)malloc(size * sizeof(T));
+//         //d_temp = (T*)malloc(nelem * sizeof(T));
+//         //d_temp = (T*)malloc(blockDim.x * size * sizeof(T));
+//         //d_temp = new T[size];  
+//      }
+//       __syncthreads();
 
       //if (d_temp == NULL){
       //  return;
@@ -91,7 +92,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
 
       prims.recv(d_temp + offset , nelem);
       //prims.recv(d_temp, nelem);
-      __syncthreads();
+//      __syncthreads();
 
       for (int i=0;i < nelem; ++i) {
        d_temp[offset + i] = FUNC()(thisInput[offset +i], d_temp[offset +i]);
@@ -99,7 +100,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
 
       //d_temp[tid] = FUNC()(thisInput[tid], d_temp[tid]);
 
-      __syncthreads();
+//      __syncthreads();
       prims.send(d_temp + offset, nelem);
 
       //delete[] d_temp; 
@@ -107,11 +108,11 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       //free(d_temp);      
 
       // Ensure all threads complete before freeing 
-      __syncthreads();
-      if (threadIdx.x == 0){
-          free(d_temp);
-	  //delete[] d_temp;
-      }
+//      __syncthreads();
+//      if (threadIdx.x == 0){
+//          free(d_temp);
+//	  //delete[] d_temp;
+//      }
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
 

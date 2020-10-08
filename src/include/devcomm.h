@@ -138,6 +138,7 @@ struct CollectiveArgs {
   // local and remote input, output, and buffer
   const void * sendbuff;
   void * recvbuff;
+  void * tempbuff;
 
   // Op-specific fields. Make sure the common part stays the
   // same on all structs of the union
