@@ -361,6 +361,12 @@ static ncclResult_t getLoopInfo(struct ncclInfo* info) {
 static ncclResult_t computeColl(struct ncclInfo* info /* input */, struct ncclColl* coll, struct ncclProxyArgs* proxyArgs /* output */) {
   coll->args.sendbuff = info->sendbuff;
   coll->args.recvbuff = info->recvbuff;
+
+  coll->args.tempbuff = malloc(info->count);
+  //coll->args.tempbuff = malloc(info->nBytes);
+  //cudaMalloc((void**)coll->args.tempbuff, info->nBytes);
+
+
   coll->args.comm = info->comm->devComm;
 
   if (info->coll == ncclCollSendRecv) {
