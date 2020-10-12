@@ -36,7 +36,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
   T * __restrict__ thisOutput = (T*)args->recvbuff;
-  T* __restrict__ temp = (T*)args->tempbuff;
+  //T* __restrict__ temp = (T*)args->tempbuff;
   //__shared__ T* __restrict__ temp = (T*)args->temp_buffer;
 
   ncclPrimitives<UNROLL, ALLREDUCE_CHUNKSTEPS/ALLREDUCE_SLICESTEPS, ALLREDUCE_SLICESTEPS, T, 1, 1, 1, FUNC>
@@ -75,17 +75,18 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       //printf("count2: %d \n", count2);
 
       //T* __restrict__ temp;
-      //__shared__ T* __restrict__ temp;
+      __shared__ T* __restrict__ temp;
       //temp = (T*)malloc(size * sizeof(T));
       //temp = (T*)args->temp_buffer;
 
-//      if (threadIdx.x == 0) {
-//         temp = (T*)malloc(size * sizeof(T));
-//         //temp = (T*)malloc(nelem * sizeof(T));
-//         //temp = (T*)malloc(blockDim.x * size * sizeof(T));
-//         //temp = new T[size];  
-//      }
-//       __syncthreads();
+      if (threadIdx.x == 0) {
+         temp = (T*)args->tempbuff;
+         //temp = (T*)malloc(size * sizeof(T));
+         //temp = (T*)malloc(nelem * sizeof(T));
+         //temp = (T*)malloc(blockDim.x * size * sizeof(T));
+         //temp = new T[size];  
+      }
+       __syncthreads();
 
       //if (temp == NULL){
       //  return;
@@ -94,7 +95,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
 
       prims.recv(temp + offset , nelem);
       //prims.recv(temp, nelem);
-//      __syncthreads();
+      __syncthreads();
 
       for (int i=0;i < nelem; ++i) {
        temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
@@ -102,7 +103,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
 
       //temp[tid] = FUNC()(thisInput[tid], temp[tid]);
 
-//      __syncthreads();
+      __syncthreads();
       prims.send(temp + offset, nelem);
 
       //delete[] temp; 
@@ -110,11 +111,11 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       //free(temp);      
 
       // Ensure all threads complete before freeing 
-//      __syncthreads();
-//      if (threadIdx.x == 0){
-//          free(temp);
-//	  //delete[] temp;
-//      }
+      __syncthreads();
+      if (threadIdx.x == 0){
+          free(temp);
+	  //delete[] temp;
+      }
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
 
