@@ -132,9 +132,30 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
        temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
     }
     prims.copySend(temp + offset, thisOutput+offset, nelem);
-    
 */
-    prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
+    __shared__ T* __restrict__ temp;
+
+    if (threadIdx.x == 0) {
+       temp = (T*)args->tempbuff;
+    }
+
+    __syncthreads();
+    prims.directRecv(temp + offset , offset, nelem);
+    __syncthreads();
+
+    for (int i=0; i < nelem; ++i){
+       temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
+    }
+
+    __syncthreads();
+    prims.copySend(temp + offset, thisOutput+offset, nelem);
+    __syncthreads();
+
+    if (threadIdx.x == 0){
+        free(temp);
+    }
+
+    //prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
 
     // k-2 steps: copy to next GPU
     for (int j=1; j<nranks-1; ++j) {
