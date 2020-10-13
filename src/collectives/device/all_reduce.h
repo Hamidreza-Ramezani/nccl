@@ -37,7 +37,6 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
   T * __restrict__ thisOutput = (T*)args->recvbuff;
   //T* __restrict__ temp = (T*)args->tempbuff;
-  //__shared__ T* __restrict__ temp = (T*)args->temp_buffer;
 
   ncclPrimitives<UNROLL, ALLREDUCE_CHUNKSTEPS/ALLREDUCE_SLICESTEPS, ALLREDUCE_SLICESTEPS, T, 1, 1, 1, FUNC>
     prims(tid, nthreads, &ring->prev, &ring->next, thisOutput, stepSize, channel, comm);
@@ -67,55 +66,26 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       offset = chunkOffset + chunk * realChunkSize;
       nelem = min(realChunkSize, size-offset);
 
-      //size_t limit = 0;
-      //cudaDeviceGetLimit(&limit, cudaLimitMallocHeapSize);
-      //printf("cudaLimitMallocHeapSize: %u\n", (unsigned)limit);
-
-      //atomicAdd(&count2, 1);
-      //printf("count2: %d \n", count2);
-
-      //T* __restrict__ temp;
       __shared__ T* __restrict__ temp;
-      //temp = (T*)malloc(size * sizeof(T));
-      //temp = (T*)args->temp_buffer;
-
       if (threadIdx.x == 0) {
          temp = (T*)args->tempbuff1;
-         //temp = (T*)malloc(size * sizeof(T));
-         //temp = (T*)malloc(nelem * sizeof(T));
-         //temp = (T*)malloc(blockDim.x * size * sizeof(T));
-         //temp = new T[size];  
       }
        __syncthreads();
-
-      //if (temp == NULL){
-      //  return;
-      //  printf("it returned a null pointer \n");
-      //}
-
       prims.recv(temp + offset , nelem);
-      //prims.recv(temp, nelem);
       __syncthreads();
 
       for (int i=0;i < nelem; ++i) {
        temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
       }
-
-      //temp[tid] = FUNC()(thisInput[tid], temp[tid]);
-
       __syncthreads();
+
       prims.send(temp + offset, nelem);
 
-      //delete[] temp; 
-      //cudaFree(temp);      
-      //free(temp);      
-
-      // Ensure all threads complete before freeing 
       __syncthreads();
       //if (threadIdx.x == 0){
       //    free(temp);
-      //    //delete[] temp;
       //}
+
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
 
