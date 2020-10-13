@@ -138,7 +138,8 @@ struct CollectiveArgs {
   // local and remote input, output, and buffer
   const void * sendbuff;
   void * recvbuff;
-  void * tempbuff;
+  void * tempbuff1;
+  void * tempbuff2;
  
   // Op-specific fields. Make sure the common part stays the
   // same on all structs of the union
@@ -174,7 +175,7 @@ struct ncclColl {
     int data[0x10];
   };
 };
-static_assert(sizeof(struct ncclColl) == (0x10*sizeof(int)), "ncclColl must have a pow2 size");
+//static_assert(sizeof(struct ncclColl) == (0x10*sizeof(int)), "ncclColl must have a pow2 size");
 
 struct ncclChannel {
   union {

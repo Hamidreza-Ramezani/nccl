@@ -80,7 +80,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       //temp = (T*)args->temp_buffer;
 
       if (threadIdx.x == 0) {
-         temp = (T*)args->tempbuff;
+         temp = (T*)args->tempbuff1;
          //temp = (T*)malloc(size * sizeof(T));
          //temp = (T*)malloc(nelem * sizeof(T));
          //temp = (T*)malloc(blockDim.x * size * sizeof(T));
@@ -136,7 +136,7 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     __shared__ T* __restrict__ temp2;
 
     if (threadIdx.x == 0) {
-       temp2 = (T*)args->tempbuff;
+       temp2 = (T*)args->tempbuff2;
     }
 
     __syncthreads();
@@ -151,9 +151,9 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     prims.copySend(temp2 + offset, thisOutput+offset, nelem);
     __syncthreads();
 
-    if (threadIdx.x == 0){
-        free(temp2);
-    }
+    //if (threadIdx.x == 0){
+    //    free(temp2);
+    //}
 
     //prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
 
