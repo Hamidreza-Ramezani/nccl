@@ -133,26 +133,26 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     }
     prims.copySend(temp + offset, thisOutput+offset, nelem);
 */
-    __shared__ T* __restrict__ temp;
+    __shared__ T* __restrict__ temp2;
 
     if (threadIdx.x == 0) {
-       temp = (T*)args->tempbuff;
+       temp2 = (T*)args->tempbuff;
     }
 
     __syncthreads();
-    prims.directRecv(temp + offset , offset, nelem);
+    prims.directRecv(temp2 + offset , offset, nelem);
     __syncthreads();
 
     for (int i=0; i < nelem; ++i){
-       temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
+       temp2[offset + i] = FUNC()(thisInput[offset +i], temp2[offset +i]);
     }
 
     __syncthreads();
-    prims.copySend(temp + offset, thisOutput+offset, nelem);
+    prims.copySend(temp2 + offset, thisOutput+offset, nelem);
     __syncthreads();
 
     if (threadIdx.x == 0){
-        free(temp);
+        free(temp2);
     }
 
     //prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
