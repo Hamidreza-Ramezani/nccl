@@ -133,29 +133,29 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     }
     prims.copySend(temp + offset, thisOutput+offset, nelem);
 */
-    __shared__ T* __restrict__ temp2;
+    //__shared__ T* __restrict__ temp2;
 
-    if (threadIdx.x == 0) {
-       temp2 = (T*)args->tempbuff;
-    }
+    //if (threadIdx.x == 0) {
+    //   temp2 = (T*)args->tempbuff;
+    //}
 
-    __syncthreads();
-    prims.directRecv(temp2 + offset , offset, nelem);
-    __syncthreads();
+    //__syncthreads();
+    //prims.directRecv(temp2 + offset , offset, nelem);
+    //__syncthreads();
 
-    for (int i=0; i < nelem; ++i){
-       temp2[offset + i] = FUNC()(thisInput[offset +i], temp2[offset +i]);
-    }
+    //for (int i=0; i < nelem; ++i){
+    //   temp2[offset + i] = FUNC()(thisInput[offset +i], temp2[offset +i]);
+    //}
 
-    __syncthreads();
-    prims.copySend(temp2 + offset, thisOutput+offset, nelem);
-    __syncthreads();
+    //__syncthreads();
+    //prims.copySend(temp2 + offset, thisOutput+offset, nelem);
+    //__syncthreads();
 
-    if (threadIdx.x == 0){
-        free(temp2);
-    }
+    //if (threadIdx.x == 0){
+    //    free(temp2);
+    //}
 
-    //prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
+    prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
 
     // k-2 steps: copy to next GPU
     for (int j=1; j<nranks-1; ++j) {
