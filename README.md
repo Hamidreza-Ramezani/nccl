@@ -1,3 +1,16 @@
+#How to compile: 
+
+```shell
+$ source script.sh
+```
+
+
+
+
+
+
+
+
 # NCCL
 
 Optimized primitives for collective multi-GPU communication.
