@@ -74,9 +74,13 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       prims.recv(temp + offset , nelem);
       __syncthreads();
 
-      for (int i=0;i < nelem; ++i) {
-       temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
+      for (int idx = offset+tid; idx < offset+nelem; idx += nthreads) {
+       temp[idx] = FUNC()(thisInput[idx], temp[idx]);
       }
+
+      //for (int i=0;i < nelem; ++i) {
+      // temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
+      //}
       __syncthreads();
 
       prims.send(temp + offset, nelem);
@@ -113,9 +117,14 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     prims.directRecv(temp2 + offset , offset, nelem);
     __syncthreads();
 
-    for (int i=0; i < nelem; ++i){
-       temp2[offset + i] = FUNC()(thisInput[offset +i], temp2[offset +i]);
+    for (int idx = offset+tid; idx < offset+nelem; idx += nthreads) {
+      temp2[idx] = FUNC()(thisInput[idx], temp2[idx]);
     }
+
+
+    //for (int i=0; i < nelem; ++i){
+    //   temp2[offset + i] = FUNC()(thisInput[offset +i], temp2[offset +i]);
+    //}
 
     __syncthreads();
     prims.copySend(temp2 + offset, thisOutput+offset, nelem);
