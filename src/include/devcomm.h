@@ -10,6 +10,7 @@
 #include "nccl.h"
 #include "align.h"
 #include <stdint.h>
+#include <stdio.h>
 
 #define NCCL_NUM_FUNCTIONS 5 // SendRecv not included for now
 typedef enum { ncclCollBroadcast, ncclCollReduce, ncclCollAllGather, ncclCollReduceScatter, ncclCollAllReduce, ncclCollSendRecv} ncclFunc_t;
@@ -140,7 +141,9 @@ struct CollectiveArgs {
   void * recvbuff;
   void * tempbuff1;
   void * tempbuff2;
- 
+  int dummy[14]; 
+
+
   // Op-specific fields. Make sure the common part stays the
   // same on all structs of the union
   union {
@@ -175,7 +178,7 @@ struct ncclColl {
     int data[0x10];
   };
 };
-//static_assert(sizeof(struct ncclColl) == (0x10*sizeof(int)), "ncclColl must have a pow2 size");
+static_assert(sizeof(struct ncclColl) == (0x20*sizeof(int)), "ncclColl must have a pow2 size");
 
 struct ncclChannel {
   union {

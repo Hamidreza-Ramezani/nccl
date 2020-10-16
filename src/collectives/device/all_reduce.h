@@ -31,7 +31,15 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
   //printf("hello World1 \n");
   //atomicAdd(&count2, 1);
   //printf("count2: %d \n", count2);
-  
+ 
+
+
+
+  //int a = sizeof(struct ncclColl);
+  //int b = 0x10*sizeof(int);
+  //printf("the size of ncclColl is:  %d  \n",a);
+  //printf("the size of ncclColl must be: %d  \n",b);
+ 
 
   // Compute pointers
   const T * __restrict__ thisInput = (const T*)args->sendbuff;
@@ -78,14 +86,11 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       for (int idx = offset+tid; idx < offset+nelem; idx += nthreads) {
        temp[idx] = FUNC()(thisInput[idx], temp[idx]);
       }
-      //print temp buffer
 
-      //# if __CUDA_ARCH__>=200
       for (int i=0;i < nelem; ++i) {
        printf("%d \n", temp[offset + i]);
        //temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
       }
-      //#endif  
       
 
 
