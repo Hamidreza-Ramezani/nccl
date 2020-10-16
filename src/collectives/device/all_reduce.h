@@ -81,10 +81,10 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       //print temp buffer
 
       //# if __CUDA_ARCH__>=200
-      //for (int i=0;i < nelem; ++i) {
-      // printf("%d \n", temp[offset + i]);
-      // //temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
-      //}
+      for (int i=0;i < nelem; ++i) {
+       printf("%d \n", temp[offset + i]);
+       //temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
+      }
       //#endif  
       
 
