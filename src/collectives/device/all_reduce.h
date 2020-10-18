@@ -74,38 +74,23 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       offset = chunkOffset + chunk * realChunkSize;
       nelem = min(realChunkSize, size-offset);
 
-      //__shared__ T* __restrict__ temp;
       T* __restrict__ temp = (T*)args->tempbuff1;
-      //if (threadIdx.x == 0) {
-      //   temp = (T*)args->tempbuff1;
-      //}
-      // __syncthreads();
       prims.recv(temp + offset , nelem);
-      //__syncthreads();
+      printf("the offset is: %d \n", offset);
+      printf("the nelem is: %d \n", nelem);
+      for (int i=0; i< sizeof(temp); ++i){
+	printf("the temp[%d] is: %d \n", i, temp[i]);
+      }
 
       for (int idx = offset+tid; idx < offset+nelem; idx += nthreads) {
        temp[idx] = FUNC()(thisInput[idx], temp[idx]);
       }
 
-      for (int i=0;i < nelem; ++i) {
-       printf("%d \n", temp[offset + i]);
-       //temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
-      }
-      
-
-
-      //for (int i=0;i < nelem; ++i) {
-      // temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
+      //for (int i=0; i<nelem; ++i) {
+      // printf("%d \n", temp[offset + i]);
+      // //temp[offset + i] = FUNC()(thisInput[offset +i], temp[offset +i]);
       //}
-      //__syncthreads();
-
       prims.send(temp + offset, nelem);
-
-      //__syncthreads();
-      //if (threadIdx.x == 0){
-      //    free(temp);
-      //}
-
        //prims.recvReduceSend(thisInput+offset, nelem);
     }
 
@@ -123,32 +108,12 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     }
     prims.copySend(temp + offset, thisOutput+offset, nelem);
 */
-    //__shared__ T* __restrict__ temp2;
     T* __restrict__ temp2 = (T*)args->tempbuff2;
-    //if (threadIdx.x == 0) {
-    //   temp2 = (T*)args->tempbuff2;
-    //}
-
-    //__syncthreads();
     prims.directRecv(temp2 + offset , offset, nelem);
-    //__syncthreads();
-
     for (int idx = offset+tid; idx < offset+nelem; idx += nthreads) {
       temp2[idx] = FUNC()(thisInput[idx], temp2[idx]);
     }
-
-
-    //for (int i=0; i < nelem; ++i){
-    //   temp2[offset + i] = FUNC()(thisInput[offset +i], temp2[offset +i]);
-    //}
-
-    //__syncthreads();
     prims.copySend(temp2 + offset, thisOutput+offset, nelem);
-    //__syncthreads();
-
-    //if (threadIdx.x == 0){
-    //    free(temp2);
-    //}
 
     //prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
 
