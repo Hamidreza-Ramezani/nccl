@@ -363,11 +363,14 @@ static ncclResult_t computeColl(struct ncclInfo* info /* input */, struct ncclCo
   coll->args.recvbuff = info->recvbuff;
   //coll->args.tempbuff1 = info->tempbuff1;
   //coll->args.tempbuff2 = info->tempbuff2;
+
   cudaSetDevice(info->comm->cudaDev);
   void** tempbuff_ptr1 = &(coll->args.tempbuff1);
   void** tempbuff_ptr2 = &(coll->args.tempbuff2);
   cudaMalloc(tempbuff_ptr1, info->nBytes);
   cudaMalloc(tempbuff_ptr2, info->nBytes);
+  cudaStreamSynchronize(info->comm->groupStream);
+  cudaDeviceSynchronize();
 
 
   coll->args.comm = info->comm->devComm;
