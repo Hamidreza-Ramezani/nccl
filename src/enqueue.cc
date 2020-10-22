@@ -361,8 +361,18 @@ static ncclResult_t getLoopInfo(struct ncclInfo* info) {
 static ncclResult_t computeColl(struct ncclInfo* info /* input */, struct ncclColl* coll, struct ncclProxyArgs* proxyArgs /* output */) {
   coll->args.sendbuff = info->sendbuff;
   coll->args.recvbuff = info->recvbuff;
-  coll->args.tempbuff1 = info->tempbuff1;
-  coll->args.tempbuff2 = info->tempbuff2;
+  //coll->args.tempbuff1 = info->tempbuff1;
+  //coll->args.tempbuff2 = info->tempbuff2;
+  cudaSetDevice(info->comm->cudaDev);
+  void** tempbuff_ptr1 = &(coll->args.tempbuff1);
+  void** tempbuff_ptr2 = &(coll->args.tempbuff2);
+  cudaMalloc(tempbuff_ptr1, info->nBytes);
+  cudaMalloc(tempbuff_ptr2, info->nBytes);
+  cudaDeviceSynchronize();
+
+
+
+
   coll->args.comm = info->comm->devComm;
 
   if (info->coll == ncclCollSendRecv) {
@@ -567,8 +577,8 @@ ncclResult_t ncclEnqueueCheck(struct ncclInfo* info) {
     NCCLCHECKGOTO(ncclAsyncColl(info->comm), ret, end);
     NCCLCHECKGOTO(checkSetStream(info), ret, end);
 
-    INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p tempbuff1 %p tempbuff2 %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
-        info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->tempbuff1, info->tempbuff2, info->count,
+    INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
+        info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->count,
         info->datatype, info->op, info->root, info->comm, info->comm->nRanks, info->stream);
 
     if (info->coll == ncclCollSendRecv) { //p2p stored separately
@@ -585,8 +595,8 @@ end:
     NCCLCHECK(ArgsCheck(info));
     NCCLCHECK(checkSetStream(info));
 
-    INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p tempbuff1 %p tempbuff2 %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
-        info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->tempbuff1, info->tempbuff2, info->count,
+    INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
+        info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->count,
         info->datatype, info->op, info->root, info->comm, info->comm->nRanks, info->stream);
 
     NCCLCHECK(ncclSaveKernel(info));
