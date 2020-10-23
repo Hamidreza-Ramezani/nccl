@@ -74,18 +74,18 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
       offset = chunkOffset + chunk * realChunkSize;
       nelem = min(realChunkSize, size-offset);
       
-      __syncthreads();
+      //__syncthreads();
       T* __restrict__ temp = (T*)args->tempbuff1;
-      __syncthreads();
+      //__syncthreads();
       prims.recv(temp + offset , nelem);
-      __syncthreads();
+      //__syncthreads();
       //for (int idx = offset+tid; idx < offset+nelem; idx += nthreads) {
       for (int idx = offset+tid; idx < offset+nelem; idx += args->coll.nThreads) {
         temp[idx] = FUNC()(temp[idx], thisInput[idx]);
       }
-      __syncthreads();
+      //__syncthreads();
       prims.send(temp + offset, nelem);
-      __syncthreads();
+      //__syncthreads();
 
 
       //prims.recvReduceSend(thisInput+offset, nelem);
@@ -106,15 +106,15 @@ __device__ void ncclAllReduceRingKernel(struct CollectiveArgs* args) {
     prims.copySend(temp + offset, thisOutput+offset, nelem);
 */
     T* __restrict__ temp2 = (T*)args->tempbuff2;
-    __syncthreads();
+    //__syncthreads();
     prims.directRecv(temp2 + offset , offset, nelem);
-    __syncthreads();
+    //__syncthreads();
     for (int idx = offset+tid; idx < offset+nelem; idx += args->coll.nThreads) {
       temp2[idx] = FUNC()(thisInput[idx], temp2[idx]);
     }
-    __syncthreads();
+    //__syncthreads();
     prims.copySend(temp2 + offset, thisOutput+offset, nelem);
-    __syncthreads();
+    //__syncthreads();
 
     //prims.directRecvReduceCopySend(thisInput+offset, thisOutput+offset, offset, nelem);
 

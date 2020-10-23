@@ -77,8 +77,8 @@ ncclResult_t ncclLaunchCooperativeKernelMultiDevice(struct cudaLaunchParams *par
   //printf("count1: %d \n", count1);
   //count1 ++;    
   if (cgMode & 0x01) {
-    size_t heapSize = 128 * 1024 * 1024;
-    cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
+    //size_t heapSize = 128 * 1024 * 1024;
+    //cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapSize);
     CUDACHECK(cudaLaunchCooperativeKernelMultiDevice(paramsList, numDevices,
             // These flags are to reduce the latency of using this API
             cudaCooperativeLaunchMultiDeviceNoPreSync|cudaCooperativeLaunchMultiDeviceNoPostSync));
@@ -368,7 +368,10 @@ static ncclResult_t computeColl(struct ncclInfo* info /* input */, struct ncclCo
   void** tempbuff_ptr2 = &(coll->args.tempbuff2);
   cudaMalloc(tempbuff_ptr1, info->nBytes);
   cudaMalloc(tempbuff_ptr2, info->nBytes);
-  cudaStreamSynchronize(info->comm->groupStream);
+  //cudaStreamSynchronize(info->comm->groupStream);
+  //cudaStreamCreate(&(info->comm->groupStream));
+  cudaMemset(coll->args.tempbuff1, 0, info->nBytes);
+  cudaMemset(coll->args.tempbuff2, 0, info->nBytes);
   cudaDeviceSynchronize();
 
 
