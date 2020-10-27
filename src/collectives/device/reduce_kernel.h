@@ -22,8 +22,8 @@ template<typename T>
 struct FuncSum {
   __device__ T operator()(const T x, const T y) const {
     return x + y;
-   // return x + y + 10;
-   // return x + y + 1000;
+   //return x + y + 10;
+   //return x + y + 1000;
   }
 };
 

@@ -19,7 +19,18 @@ ncclResult_t ncclAllReduce(const void* sendbuff, void* recvbuff, size_t count,
   void** tempbuff_ptr2 = &tempbuff2;
   cudaMalloc(tempbuff_ptr1, nbytes);
   cudaMalloc(tempbuff_ptr2, nbytes);
+
+  //args->sendBytes = sendCount * wordSize(type);
+  //args->expectedBytes = recvCount * wordSize(type);
+  //size_t totalnbytes = max(args->sendBytes, args->expectedBytes);
+  //size_t shift = (totalnbytes * iter) % args->maxbytes;
+  //if (shift + totalnbytes > args->maxbytes) shift = 0;
+
+  //char* temp_buff1 = ((char*)tempbuff1) + shift;
+  //char* temp_buff2 = ((char*)tempbuff2) + shift;
+
   cudaDeviceSynchronize();
+
 
   struct ncclInfo info = { ncclCollAllReduce, "AllReduce",
     sendbuff, recvbuff, tempbuff1, tempbuff2, count, datatype, op, 0, comm, stream, /* Args */
